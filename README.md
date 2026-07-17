@@ -42,6 +42,12 @@ En mode dev, le front proxifie `/api` vers le backend automatiquement.
 npm run serve   # build + démarre Express qui sert le front et l'API sur :3001
 ```
 
+### Déploiement en ligne
+
+L'app a un backend : un hébergeur **statique seul (Netlify…) ne suffit pas**.
+Voir **[DEPLOY.md](DEPLOY.md)** — tout-en-un sur un hébergeur Node (Render…), ou
+front Netlify + backend Node séparés (`VITE_API_URL` + CORS).
+
 ## Fonctionnalités
 
 - **Saisie manuelle** : titre, portions, temps de prépa/cuisson, ingrédients et étapes en listes dynamiques, tags, notes, photo.

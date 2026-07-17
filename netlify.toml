@@ -1,0 +1,14 @@
+# Déploiement du FRONT sur Netlify (site statique).
+# Le backend (API Express) doit être hébergé séparément sur un service Node
+# (Render, Railway, Fly.io…) et son URL renseignée dans la variable
+# d'environnement VITE_API_URL du site Netlify. Voir DEPLOY.md.
+
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+# L'app n'a pas de routeur, mais on renvoie tout vers index.html par sécurité.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
