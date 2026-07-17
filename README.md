@@ -1,6 +1,28 @@
 # 🍲 Recette Mate
 
-Carnet de recettes personnel : **saisie à la main** et **import depuis Instagram**.
+**Recette Mate** est un carnet de recettes personnel doublé d'un outil de
+préparation des menus de la semaine.
+
+L'idée : centraliser ses recettes (tapées à la main **ou importées d'un post /
+reel Instagram**), puis, en début de semaine, choisir celles qu'on va cuisiner et
+obtenir automatiquement **une liste de courses rangée par rayon** — pensée pour
+le *batch cooking* (cuisiner 2-3 plats en lot).
+
+En bref, l'application permet de :
+
+- 📝 **enregistrer des recettes** — saisie manuelle ou import depuis Instagram
+  (la légende est analysée et découpée en ingrédients + étapes) ;
+- 🥕 **structurer les ingrédients** en *quantité / unité / nom*, et **ajuster les
+  portions** (les quantités se recalculent) ;
+- 🔥 **suivre les valeurs nutritionnelles** par portion (saisies, extraites de la
+  légende, ou estimées via la base CIQUAL de l'ANSES) ;
+- 🗓️ **planifier la semaine** et **générer la liste de courses** agrégée et
+  classée par rayon, avec exclusion des basiques déjà en stock et ajout d'articles
+  hors recettes.
+
+C'est une application web **React + Vite** (front) avec une petite **API Express**
+(back) et un stockage sur fichiers JSON — pas de base de données, pas de compte :
+tout tourne en local.
 
 ## Lancer le projet
 
@@ -80,18 +102,27 @@ lesquels ont été ignorés.
 
 ## Stockage
 
-Les recettes sont enregistrées dans `data/recipes.json` (créé au premier
-enregistrement, ignoré par git). Pour repartir de zéro, supprimez ce fichier.
+Tout est enregistré dans des fichiers JSON sous `data/` (créés à la première
+utilisation, **ignorés par git** — les données restent donc locales) :
+
+- `data/recipes.json` — les recettes ;
+- `data/plan.json` — le planning de la semaine + la liste de courses.
+
+Pour repartir de zéro, supprimez ces fichiers.
 
 ## Structure
 
 ```
 server/
-  index.js        API Express (CRUD + import) + service du build
-  instagram.js    récupération + parsing des posts Instagram
-  store.js        persistance JSON
+  index.js          API Express (CRUD recettes, import, planning, estimation) + service du build
+  instagram.js      récupération + parsing des posts Instagram
+  nutrition.js      matching des ingrédients sur la base CIQUAL + conversion en grammes
+  nutrition-db.json extrait CIQUAL (≈3 200 aliments, valeurs pour 100 g)
+  store.js          persistance JSON (recettes + planning)
 src/
-  App.tsx         navigation entre les vues
-  components/     RecipeForm, RecipeList, RecipeDetail, InstagramImport
+  App.tsx           navigation par onglets (Recettes / Planning)
+  components/        RecipeForm, RecipeList, RecipeDetail, InstagramImport, Planner
+  scale.ts           mise à l'échelle des quantités (fractions, plages…)
+  shopping.ts        agrégation de la liste de courses + classement par rayon
   api.ts, types.ts
 ```
