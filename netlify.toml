@@ -7,6 +7,10 @@
 
 [functions]
   node_bundler = "esbuild"
+  # express & serverless-http sont en CommonJS : les laisser bundler en ESM casse
+  # leurs require() internes ("Dynamic require of http not supported"). On les
+  # garde donc en node_modules (chargés au runtime, où require fonctionne).
+  external_node_modules = ["express", "serverless-http", "@netlify/blobs"]
 
 # Les appels du front vers /api/* sont routés vers la fonction.
 [[redirects]]
