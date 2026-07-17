@@ -44,9 +44,12 @@ npm run serve   # build + démarre Express qui sert le front et l'API sur :3001
 
 ### Déploiement en ligne
 
-L'app a un backend : un hébergeur **statique seul (Netlify…) ne suffit pas**.
-Voir **[DEPLOY.md](DEPLOY.md)** — tout-en-un sur un hébergeur Node (Render…), ou
-front Netlify + backend Node séparés (`VITE_API_URL` + CORS).
+Configuré pour se déployer **entièrement sur Netlify** : front statique + API en
+fonction serverless + données dans **Netlify Blobs** (aucune config, forfait Free
+suffisant). Il suffit d'importer le repo dans Netlify.
+
+Voir **[DEPLOY.md](DEPLOY.md)** pour le détail (et l'alternative « un seul serveur
+Node » type Render/Railway).
 
 ## Fonctionnalités
 

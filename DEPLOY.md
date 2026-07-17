@@ -1,61 +1,64 @@
 # Déploiement
 
-Recette Mate est une app **full-stack** : un front React (statique après build) et
-un backend **Express** qui sert l'API et stocke les données dans des fichiers JSON.
-Un hébergeur **statique seul (Netlify, GitHub Pages…) ne suffit pas** : il faut un
-serveur Node quelque part pour l'API.
+Recette Mate est une app **full-stack** (front React + API Express + stockage).
+Elle est configurée pour se déployer **entièrement sur Netlify** : le front en
+statique, l'API en **fonction serverless**, et les données dans **Netlify Blobs**.
 
-Deux montages possibles.
+## Déployer sur Netlify (recommandé)
 
----
+Tout est déjà prêt dans le dépôt :
 
-## Option 1 — Tout-en-un sur un hébergeur Node (le plus simple)
+- [`netlify.toml`](netlify.toml) : build (`npm run build` → `dist/`), et redirection
+  `/api/*` → la fonction ;
+- [`netlify/functions/api.mjs`](netlify/functions/api.mjs) : l'API Express emballée
+  en fonction (`serverless-http`) ;
+- le stockage bascule automatiquement sur **Netlify Blobs** en ligne (et sur des
+  fichiers `data/*.json` en local).
 
-Un seul service qui build le front puis lance Express (`npm run serve` sert à la
-fois `dist/` et `/api`). Exemple avec **Render** :
+### Étapes
 
-- **Build command** : `npm install && npm run build`
-- **Start command** : `npm run start`
-- Le serveur écoute sur `process.env.PORT` (fourni par l'hôte) automatiquement.
-- ⚠️ **Persistance** : ajoutez un **disque persistant** monté sur `data/`, sinon
-  les recettes et le planning sont réinitialisés à chaque redéploiement (systèmes
-  de fichiers éphémères par défaut).
+1. Sur Netlify : **Add new site → Import from Git** → choisir le repo
+   `recette-mate`.
+2. Laisser les réglages détectés (build `npm run build`, publish `dist`) — ils
+   viennent du `netlify.toml`.
+3. **Deploy**. C'est tout : aucune variable d'environnement requise, pas de backend
+   séparé, pas de CORS à gérer (front et API sont sur le même domaine).
 
-Rien d'autre à configurer : le front appelle `/api` sur la même origine.
+Les recettes et le planning sont stockés dans Netlify Blobs (persistant, inclus
+dans le forfait **Free**).
 
----
+### Bon à savoir (forfait Free)
 
-## Option 2 — Front sur Netlify + backend sur un hébergeur Node (montage actuel)
-
-### a) Backend (API) sur Render / Railway / Fly.io
-
-- **Build** : `npm install`
-- **Start** : `npm run start` (lance `server/index.js` sur `process.env.PORT`)
-- Variables d'env :
-  - `CORS_ORIGIN` = l'URL de votre site Netlify (ex : `https://recette-mate.netlify.app`)
-    pour n'autoriser que lui (sinon `*` par défaut).
-- ⚠️ Même remarque sur le **disque persistant** monté sur `data/`.
-- Notez l'URL publique obtenue, ex : `https://recette-mate-api.onrender.com`.
-
-### b) Front sur Netlify
-
-Le fichier [`netlify.toml`](netlify.toml) configure déjà `build = npm run build`
-et `publish = dist`. Il reste **une** variable à définir dans Netlify
-(**Site settings → Environment variables**) :
-
-- `VITE_API_URL` = l'URL du backend de l'étape (a), ex :
-  `https://recette-mate-api.onrender.com`
-
-Puis redéployez le site (les variables Vite sont injectées **au build**, donc un
-nouveau déploiement est nécessaire après avoir ajouté la variable).
-
-Le front appellera alors le backend distant, et le backend l'autorisera via CORS.
+- **Timeout des fonctions : 10 s.** L'import Instagram *automatique* (fetch d'une
+  page externe) peut le dépasser → utilisez le repli « coller la légende », rapide.
+- Léger *cold start* possible sur la première requête après inactivité (< 1 s).
+- Quotas Free (≈125 k appels/mois, 100 h, 100 Go) : très au-delà d'un usage perso.
 
 ---
+
+## Alternative — un seul serveur Node (Render, Railway, Fly.io…)
+
+Si vous préférez un hôte Node classique, `npm run serve` build le front puis lance
+Express qui sert `dist/` **et** l'API sur le même port :
+
+- **Build** : `npm install && npm run build`
+- **Start** : `npm run start`
+- Le serveur écoute sur `process.env.PORT`.
+- ⚠️ Montez un **disque persistant** sur `data/` (sinon les données sont
+  réinitialisées à chaque redéploiement).
+
+## Développement local
+
+```bash
+npm install
+npm run dev      # front sur http://localhost:5180, API sur http://localhost:3001
+```
+
+En local, les données sont dans `data/*.json` (ignorés par git).
 
 ## Pourquoi une page blanche sans build ?
 
-Le `index.html` de la racine charge `/src/main.tsx` (entrée de développement, que
-Vite transforme à la volée). En production il **faut** lancer `npm run build`, qui
-génère `dist/` avec un `index.html` compilé. Sans build, le navigateur demande un
-fichier `.tsx` inexistant → page blanche. `netlify.toml` s'en charge désormais.
+Le `index.html` de la racine charge `/src/main.tsx` (entrée de développement).
+En production il **faut** builder (`npm run build`) pour générer `dist/` avec un
+`index.html` compilé. `netlify.toml` s'en charge ; sans lui, un hébergeur qui sert
+le dépôt brut renvoie une page blanche.

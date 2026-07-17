@@ -1,11 +1,7 @@
 // Estimation nutritionnelle d'une recette à partir de la base CIQUAL (ANSES).
 // Valeurs de la base : kcal / protéines / glucides / lipides pour 100 g.
-import { readFileSync } from 'node:fs'
-import { dirname, join } from 'node:path'
-import { fileURLToPath } from 'node:url'
-
-const __dirname = dirname(fileURLToPath(import.meta.url))
-const DB = JSON.parse(readFileSync(join(__dirname, 'nutrition-db.json'), 'utf8'))
+// Import direct du JSON (bundlé avec la fonction Netlify, pas de lecture disque).
+import DB from './nutrition-db.json' with { type: 'json' }
 
 const STOP = new Set([
   'de', 'du', 'des', 'la', 'le', 'les', 'l', 'a', 'au', 'aux', 'en', 'et', 'ou',
