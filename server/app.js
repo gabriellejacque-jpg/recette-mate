@@ -1,29 +1,13 @@
-// App Express (routes + middlewares), sans app.listen ni service des fichiers
-// statiques. Réutilisée par le serveur local (server/index.js) et par la
-// fonction Netlify (netlify/functions/api.mjs).
+// App Express pour le développement local et l'hébergement mono-serveur Node.
+// La logique des routes vit dans router.js (partagée avec la fonction Netlify).
 import express from 'express'
-import {
-  listRecipes,
-  getRecipe,
-  createRecipe,
-  updateRecipe,
-  deleteRecipe,
-  getPlan,
-  savePlan,
-} from './store.js'
-import {
-  normalizeInstagramUrl,
-  fetchInstagramPost,
-  parseCaptionToRecipe,
-} from './instagram.js'
-import { estimateRecipe } from './nutrition.js'
+import { route } from './router.js'
 
 export const app = express()
 
 app.use(express.json({ limit: '2mb' }))
 
-// CORS : autorise le front (utile s'il est hébergé sur un autre domaine).
-// CORS_ORIGIN peut restreindre à une origine précise ; défaut = *.
+// CORS (utile si le front est servi depuis un autre domaine).
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', process.env.CORS_ORIGIN || '*')
   res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS')
@@ -32,81 +16,12 @@ app.use((req, res, next) => {
   next()
 })
 
-// ---- API recettes ----
-app.get('/api/recipes', async (_req, res) => {
-  res.json(await listRecipes())
-})
-
-app.get('/api/recipes/:id', async (req, res) => {
-  const r = await getRecipe(req.params.id)
-  if (!r) return res.status(404).json({ error: 'Recette introuvable' })
-  res.json(r)
-})
-
-app.post('/api/recipes', async (req, res) => {
-  const r = await createRecipe(req.body || {})
-  res.status(201).json(r)
-})
-
-app.put('/api/recipes/:id', async (req, res) => {
-  const r = await updateRecipe(req.params.id, req.body || {})
-  if (!r) return res.status(404).json({ error: 'Recette introuvable' })
-  res.json(r)
-})
-
-app.delete('/api/recipes/:id', async (req, res) => {
-  const ok = await deleteRecipe(req.params.id)
-  if (!ok) return res.status(404).json({ error: 'Recette introuvable' })
-  res.status(204).end()
-})
-
-// ---- Import Instagram ----
-// Deux modes : par URL (tentative de fetch auto) ou par légende collée à la main.
-app.post('/api/import/instagram', async (req, res) => {
-  const { url, caption } = req.body || {}
-
-  if (caption && caption.trim()) {
-    const recipe = parseCaptionToRecipe(caption, {
-      source: normalizeInstagramUrl(url || '') || url || '',
-    })
-    return res.json({ recipe, mode: 'caption' })
-  }
-
-  const canonical = normalizeInstagramUrl(url || '')
-  if (!canonical) {
-    return res.status(400).json({
-      error:
-        "URL Instagram invalide. Collez un lien de post ou de reel (ex : https://www.instagram.com/p/XXXX/).",
-    })
-  }
-
+app.all('/api/*', async (req, res) => {
   try {
-    const post = await fetchInstagramPost(canonical)
-    const recipe = parseCaptionToRecipe(post.caption, {
-      image: post.image,
-      author: post.author,
-      source: canonical,
-    })
-    res.json({ recipe, mode: 'auto', caption: post.caption })
+    const r = await route(req.method, req.path, req.body || {})
+    if (r.status === 204) return res.status(204).end()
+    res.status(r.status).json(r.body)
   } catch (e) {
-    res.status(502).json({ error: e.message, details: e.details, needsCaption: true })
+    res.status(500).json({ error: e.message })
   }
-})
-
-// ---- Planning de la semaine ----
-app.get('/api/plan', async (_req, res) => {
-  res.json(await getPlan())
-})
-
-app.put('/api/plan', async (req, res) => {
-  res.json(await savePlan(req.body || {}))
-})
-
-// ---- Estimation nutritionnelle (base CIQUAL / ANSES) ----
-app.post('/api/nutrition/estimate', (req, res) => {
-  const { ingredients, servings } = req.body || {}
-  if (!Array.isArray(ingredients)) {
-    return res.status(400).json({ error: 'Liste d’ingrédients requise.' })
-  }
-  res.json(estimateRecipe(ingredients, servings))
 })
