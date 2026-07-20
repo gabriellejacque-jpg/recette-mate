@@ -14,6 +14,7 @@
     "express": "^4.19.2"
   },
   "devDependencies": {
+    "@netlify/zip-it-and-ship-it": "^15.2.0",
     "@vitejs/plugin-react": "^4.3.1",
     "concurrently": "^9.0.1",
     "react": "^18.3.1",

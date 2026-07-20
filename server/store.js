@@ -4,11 +4,11 @@
 // Le bon backend est choisi automatiquement (repli sur fichiers si Blobs indispo).
 import { readFile, writeFile, mkdir } from 'node:fs/promises'
 import { existsSync } from 'node:fs'
-import { dirname, join } from 'node:path'
-import { fileURLToPath } from 'node:url'
+import { join } from 'node:path'
 
-const __dirname = dirname(fileURLToPath(import.meta.url))
-const DATA_DIR = join(__dirname, '..', 'data')
+// Chemin sans import.meta.url (invalide si la fonction est bundlée en CommonJS).
+// Le stockage fichier ne sert qu'en local / hôte Node ; sur Netlify c'est Blobs.
+const DATA_DIR = join(process.cwd(), 'data')
 
 // --- Sélection du backend ---
 let blobsStore // undefined = non testé, null = indisponible, sinon = store
