@@ -1,6 +1,7 @@
 // Fonction Netlify native (sans Express ni serverless-http, pour un bundling sûr).
 // La redirection /api/* -> /.netlify/functions/api/:splat (netlify.toml) route ici ;
 // on normalise le chemin puis on délègue au routeur partagé (server/router.js).
+import { connectLambda } from '@netlify/blobs'
 import { route } from '../../server/router.js'
 
 const CORS = {
@@ -10,6 +11,14 @@ const CORS = {
 }
 
 export const handler = async (event) => {
+  // Indispensable pour Netlify Blobs dans une fonction classique : câble le
+  // contexte Blobs depuis l'event avant tout getStore().
+  try {
+    connectLambda(event)
+  } catch {
+    /* hors Netlify : le stockage bascule sur les fichiers */
+  }
+
   // Normalise vers /api/… quelle que soit la forme reçue.
   let path = event.path || '/'
   path = path.replace(/^\/\.netlify\/functions\/api/, '')
