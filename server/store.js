@@ -11,14 +11,16 @@ import { join } from 'node:path'
 const DATA_DIR = join(process.cwd(), 'data')
 
 // --- Sélection du backend ---
+// getStore() lève MissingBlobsEnvironmentError hors Netlify → on bascule alors sur
+// les fichiers. Sur Netlify, il réussit et on utilise Blobs (les erreurs de
+// lecture/écriture Blobs remontent alors telles quelles, au lieu d'un repli disque
+// silencieux qui échouerait de toute façon sur un système de fichiers en lecture seule).
 let blobsStore // undefined = non testé, null = indisponible, sinon = store
 async function blobs() {
   if (blobsStore !== undefined) return blobsStore
   try {
     const { getStore } = await import('@netlify/blobs')
-    const s = getStore('recette-mate')
-    await s.get('__ping__') // déclenche l'erreur de config hors Netlify
-    blobsStore = s
+    blobsStore = getStore('recette-mate')
   } catch {
     blobsStore = null
   }

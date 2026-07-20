@@ -37,22 +37,34 @@ export default function App() {
       : undefined
 
   async function handleCreate(draft: RecipeDraft) {
-    const r = await api.create(draft)
-    await refresh()
-    setView({ name: 'detail', id: r.id })
+    try {
+      const r = await api.create(draft)
+      await refresh()
+      setView({ name: 'detail', id: r.id })
+    } catch (e) {
+      alert("Impossible d'enregistrer la recette : " + (e as Error).message)
+    }
   }
 
   async function handleUpdate(id: string, draft: RecipeDraft) {
-    await api.update(id, draft)
-    await refresh()
-    setView({ name: 'detail', id })
+    try {
+      await api.update(id, draft)
+      await refresh()
+      setView({ name: 'detail', id })
+    } catch (e) {
+      alert("Impossible d'enregistrer la recette : " + (e as Error).message)
+    }
   }
 
   async function handleDelete(id: string) {
     if (!confirm('Supprimer cette recette ?')) return
-    await api.remove(id)
-    await refresh()
-    setView({ name: 'list' })
+    try {
+      await api.remove(id)
+      await refresh()
+      setView({ name: 'list' })
+    } catch (e) {
+      alert('Impossible de supprimer : ' + (e as Error).message)
+    }
   }
 
   return (
